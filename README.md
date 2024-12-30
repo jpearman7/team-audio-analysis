@@ -49,7 +49,7 @@ audio_dat/
 
 2. Run the script:
 ```bash
-python main.py
+python audio_merge.py
 ```
 
 3. Check the `audio_output` directory for merged MP3 files.
