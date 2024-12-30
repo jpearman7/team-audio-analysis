@@ -2,12 +2,19 @@
 name = "audio-merger"
 version = "0.1.0"
 description = "A tool for merging multiple audio files using pydub"
-requires-python = ">=3.8"
-
-[tool.poetry.dependencies]
-python = ">=3.8"
-pydub = ">=0.25.1"
+requires-python = ">=3.9"
+dependencies = [
+"pydub >=0.25.1",
+"assemblyai >=0.17.0",
+"google-generativeai >=0.3.0",
+"asyncio >=3.4.3"]
 
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = []
+
+[tool.uv.workspace]
+members = ["myproject"]
