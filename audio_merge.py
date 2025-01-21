@@ -95,6 +95,8 @@ def main():
     # Define base directories using absolute paths
     audio_dat = script_dir / "audio_dat"
     audio_output = script_dir / "audio_output"
+    # audio_dat = Path("E:/11-8-2024_audio_backup")
+    # audio_output = Path("E:/merged_audio")
     
     logging.info("Starting audio merger process")
     logging.info(f"Input directory: {audio_dat}")

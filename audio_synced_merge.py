@@ -28,40 +28,34 @@ def parse_timestamp(filename: str) -> datetime:
     timestamp_str = filename.split('.')[0]
     return datetime.strptime(timestamp_str, '%m-%d-%Y-%H-%M-%S')
 
-def find_latest_start_time(input_dir: str) -> Tuple[datetime, str]:
+def find_latest_start_time_for_date(date_path: str) -> Tuple[datetime, str]:
     """
-    Find the latest initial timestamp across all session folders.
+    Find the latest initial timestamp across session folders within a specific date folder.
     Returns the timestamp and the folder it was found in.
     """
     latest_time = None
     latest_folder = None
     
-    # Iterate through date folders
-    for date_dir in os.listdir(input_dir):
-        date_path = os.path.join(input_dir, date_dir)
-        if not os.path.isdir(date_path):
+    # Iterate through session folders (121, 122, etc.)
+    for session_dir in os.listdir(date_path):
+        session_path = os.path.join(date_path, session_dir)
+        if not os.path.isdir(session_path):
             continue
             
-        # Iterate through session folders (121, 122, etc.)
-        for session_dir in os.listdir(date_path):
-            session_path = os.path.join(date_path, session_dir)
-            if not os.path.isdir(session_path):
-                continue
-                
-            # Get valid WAV files in the session folder
-            wav_files = [f for f in os.listdir(session_path) 
-                        if f.endswith('.wav') and is_valid_wav(os.path.join(session_path, f))]
-            if not wav_files:
-                continue
-                
-            # Get chronologically first valid file
-            first_file = min(wav_files)
-            timestamp = parse_timestamp(first_file)
+        # Get valid WAV files in the session folder
+        wav_files = [f for f in os.listdir(session_path) 
+                    if f.endswith('.wav') and is_valid_wav(os.path.join(session_path, f))]
+        if not wav_files:
+            continue
             
-            if latest_time is None or timestamp > latest_time:
-                latest_time = timestamp
-                latest_folder = session_dir
-    
+        # Get chronologically first valid file
+        first_file = min(wav_files)
+        timestamp = parse_timestamp(first_file)
+        
+        if latest_time is None or timestamp > latest_time:
+            latest_time = timestamp
+            latest_folder = session_dir
+
     return latest_time, latest_folder
 
 def calculate_trim_duration(start_file: str, sync_time: datetime) -> float:
@@ -73,17 +67,9 @@ def calculate_trim_duration(start_file: str, sync_time: datetime) -> float:
 def merge_and_sync_audio(input_dir: str, output_dir: str) -> None:
     """
     Merge and synchronize audio files from each session folder,
-    trimming the start based on the latest initial timestamp.
+    trimming the start based on the latest initial timestamp within each date.
     """
     setup_logging()
-    
-    # Find the latest start time across all folders
-    sync_time, sync_folder = find_latest_start_time(input_dir)
-    if not sync_time:
-        raise ValueError("No valid WAV files found in any folder")
-    
-    logging.info(f"Using sync time {sync_time} from folder {sync_folder}")
-    print(f"Synchronizing all audio to start time: {sync_time} (from folder {sync_folder})")
     
     # Create output directory if it doesn't exist
     if not os.path.exists(output_dir):
@@ -95,6 +81,15 @@ def merge_and_sync_audio(input_dir: str, output_dir: str) -> None:
         if not os.path.isdir(date_path):
             continue
             
+        # Find the latest start time for this specific date
+        sync_time, sync_folder = find_latest_start_time_for_date(date_path)
+        if not sync_time:
+            logging.warning(f"No valid WAV files found in date folder {date_dir}")
+            continue
+        
+        logging.info(f"Using sync time {sync_time} from folder {sync_folder} for date {date_dir}")
+        print(f"Date {date_dir}: Synchronizing audio to start time: {sync_time} (from folder {sync_folder})")
+        
         # Create corresponding output date directory
         output_date_dir = os.path.join(output_dir, f"{date_dir}_merged")
         if not os.path.exists(output_date_dir):
@@ -156,7 +151,9 @@ def merge_and_sync_audio(input_dir: str, output_dir: str) -> None:
 
 def main():
     input_dir = "audio_dat"  # Base directory containing date folders
+    # input_dir = "E:/11-8-2024_audio_backup"
     output_dir = "audio_output"  # Directory for merged output
+    # output_dir = "E:/merged_synced_audio"  # Directory for merged output
     
     try:
         merge_and_sync_audio(input_dir, output_dir)
